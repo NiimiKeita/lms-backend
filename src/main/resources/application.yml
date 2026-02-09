@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/skillbridge_lms?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Tokyo
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:cDE3$rfV}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
