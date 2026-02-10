@@ -86,3 +86,27 @@
 - **決定**: AdminUpdateUserRequest には email フィールドを含めない
 - **理由**: email はログインIDとして使用されるため、変更時の影響範囲が大きい
 - **実装**: 編集フォームでは name と role のみ変更可能
+
+---
+
+## Sprint 5 設計判断 (2026-02-10)
+
+### ADR-016: 課題管理API の権限設計
+- **決定**: 課題のCRUDはADMIN/INSTRUCTORのみ、提出は認証済みユーザー、レビューはADMIN/INSTRUCTOR
+- **理由**: 3ロール体制を活用し、INSTRUCTORにも課題管理権限を付与
+
+### ADR-017: 課題提出方式 (GitHub URL)
+- **決定**: GitHub URL を提出物として受け付ける方式
+- **理由**: ファイルアップロード管理の複雑さを回避、GitHubで成果物管理するワークフローに適合
+
+### ADR-018: パスワードリセットメール実装
+- **決定**: Spring Boot Starter Mail + SimpleMailMessage で実装
+- **理由**: テキストメールで十分、メール送信失敗はログのみ (email enumeration対策)
+
+### ADR-019: Docker Compose デプロイ構成
+- **決定**: MySQL + Backend + Frontend の3サービス構成 (multi-stage build)
+- **理由**: 1コマンドで起動可能、application-docker.yml でDocker専用設定分離
+
+### ADR-020: Next.js standalone出力
+- **決定**: `output: "standalone"` でビルド
+- **理由**: Docker デプロイ時に node_modules 不要、イメージサイズ削減

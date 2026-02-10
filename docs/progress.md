@@ -86,15 +86,21 @@
 
 ---
 
-## Sprint 5 (計画済み・未着手) - 課題提出 + デプロイ
+## Sprint 5 (2/10) - 課題提出 + デプロイ
 
-| タスク | 内容 | 状態 |
-|--------|------|------|
-| TASK-1 | 課題提出 Backend API | 未着手 |
-| TASK-2 | 課題提出 Frontend | 未着手 |
-| TASK-3 | Docker Compose デプロイ | 未着手 |
-| TASK-4 | コンテンツ移行 (17コース・150レッスン) | 未着手 |
-| TASK-5 | パスワードリセットメール送信 | 未着手 |
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 20 | 課題管理 Backend API (11 endpoints) | 完了 |
+| Phase 21 | 課題管理 Frontend (3新規ページ + 2改修) | 完了 |
+| Phase 22 | パスワードリセットメール送信 (MailService) | 完了 |
+| Phase 23 | Docker Compose デプロイ (MySQL + Backend + Frontend) | 完了 |
+| Phase 24 | コンテンツ作成 + テスト (41テスト追加) | 完了 |
+
+**成果物:**
+- 課題 CRUD (5 endpoints), 提出管理 (6 endpoints): ADMIN/INSTRUCTOR権限
+- パスワードリセットメール送信 (JavaMailSender)
+- Docker Compose (3サービス: MySQL + Backend + Frontend)
+- テスト: TaskServiceTest (12), TaskSubmissionServiceTest (15), TaskControllerIntegrationTest (14)
 
 ---
 
@@ -172,12 +178,31 @@
 |--------|------|------|------|
 | GET | `/api/courses/{courseId}/lessons/{lessonId}/content` | レッスンコンテンツ取得 | 必要 |
 
+### 課題管理 (TaskController) - Sprint 5
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/courses/{courseId}/tasks` | 課題一覧 | 必要 |
+| GET | `/api/courses/{courseId}/tasks/{taskId}` | 課題詳細 | 必要 |
+| POST | `/api/courses/{courseId}/tasks` | 課題作成 | ADMIN/INSTRUCTOR |
+| PUT | `/api/courses/{courseId}/tasks/{taskId}` | 課題更新 | ADMIN/INSTRUCTOR |
+| DELETE | `/api/courses/{courseId}/tasks/{taskId}` | 課題削除 | ADMIN/INSTRUCTOR |
+
+### 課題提出 (TaskSubmissionController) - Sprint 5
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| POST | `/api/tasks/{taskId}/submissions` | 課題提出 | 必要 |
+| GET | `/api/tasks/{taskId}/submissions/my` | 自分の提出一覧 | 必要 |
+| GET | `/api/tasks/{taskId}/submissions` | 全提出一覧 | ADMIN/INSTRUCTOR |
+| GET | `/api/tasks/submissions/{id}` | 提出詳細 | 必要 |
+| PATCH | `/api/tasks/submissions/{id}/status` | ステータス変更 | ADMIN/INSTRUCTOR |
+| POST | `/api/tasks/submissions/{id}/feedback` | フィードバック追加 | ADMIN/INSTRUCTOR |
+
 ### ヘルスチェック (HealthController)
 | Method | Path | 説明 | 認証 |
 |--------|------|------|------|
 | GET | `/api/health` | ヘルスチェック | 不要 |
 
-**合計: 30 endpoints**
+**合計: 41 endpoints**
 
 ---
 
@@ -211,8 +236,11 @@
 | `/admin/users/[id]/edit` | ユーザー編集 |
 | `/admin/users/[id]/progress` | ユーザー進捗詳細 |
 | `/admin/progress` | 進捗管理一覧 |
+| `/admin/submissions` | 提出管理一覧 |
+| `/admin/submissions/[id]` | 提出レビュー詳細 |
+| `/courses/[id]/tasks/[taskId]` | 課題提出 |
 
-**合計: 17 ページ**
+**合計: 20 ページ**
 
 ---
 
@@ -247,5 +275,8 @@
 | AdminUserServiceTest | 14 | Unit | 4 |
 | AdminUserControllerIntegrationTest | 11 | Integration | 4 |
 | AdminProgressControllerIntegrationTest | 6 | Integration | 4 |
+| TaskServiceTest | 12 | Unit | 5 |
+| TaskSubmissionServiceTest | 15 | Unit | 5 |
+| TaskControllerIntegrationTest | 14 | Integration | 5 |
 
-**合計: 約110テスト**
+**合計: 約151テスト**

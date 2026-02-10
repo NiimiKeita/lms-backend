@@ -39,6 +39,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final MailService mailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -110,8 +111,7 @@ public class AuthService {
                     .build();
             passwordResetTokenRepository.save(resetToken);
 
-            // TODO: Send email with reset link
-            // mailService.sendPasswordResetEmail(user.getEmail(), token);
+            mailService.sendPasswordResetEmail(user.getEmail(), token);
         });
         // Always return success to prevent email enumeration
     }
