@@ -78,14 +78,14 @@ class CourseServiceTest {
         // Given
         List<Course> courses = List.of(publishedCourse, unpublishedCourse);
         Page<Course> page = new PageImpl<>(courses, pageable, courses.size());
-        when(courseRepository.findAll(pageable)).thenReturn(page);
+        when(courseRepository.findAll(any(Pageable.class))).thenReturn(page);
 
         // When
-        PageResponse<CourseResponse> response = courseService.getCourses(null, true, pageable);
+        PageResponse<CourseResponse> response = courseService.getCourses(null, "all", "newest", true, pageable);
 
         // Then
         assertThat(response.getContent()).hasSize(2);
-        verify(courseRepository).findAll(pageable);
+        verify(courseRepository).findAll(any(Pageable.class));
     }
 
     @Test
@@ -94,15 +94,15 @@ class CourseServiceTest {
         // Given
         List<Course> courses = List.of(publishedCourse);
         Page<Course> page = new PageImpl<>(courses, pageable, courses.size());
-        when(courseRepository.findByPublishedTrue(pageable)).thenReturn(page);
+        when(courseRepository.findByPublishedTrue(any(Pageable.class))).thenReturn(page);
 
         // When
-        PageResponse<CourseResponse> response = courseService.getCourses(null, false, pageable);
+        PageResponse<CourseResponse> response = courseService.getCourses(null, "all", "newest", false, pageable);
 
         // Then
         assertThat(response.getContent()).hasSize(1);
         assertThat(response.getContent().get(0).getPublished()).isTrue();
-        verify(courseRepository).findByPublishedTrue(pageable);
+        verify(courseRepository).findByPublishedTrue(any(Pageable.class));
     }
 
     @Test

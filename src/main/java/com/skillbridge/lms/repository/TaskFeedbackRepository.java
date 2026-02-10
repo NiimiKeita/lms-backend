@@ -9,4 +9,6 @@ import com.skillbridge.lms.entity.TaskFeedback;
 public interface TaskFeedbackRepository extends JpaRepository<TaskFeedback, Long> {
 
     List<TaskFeedback> findBySubmissionIdOrderByCreatedAtDesc(Long submissionId);
+
+    List<TaskFeedback> findTop5BySubmissionUserIdOrderByCreatedAtDesc(Long userId);
 }

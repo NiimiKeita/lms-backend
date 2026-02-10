@@ -3,7 +3,9 @@ package com.skillbridge.lms.service;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,20 +27,30 @@ public class CourseService {
     private final CourseRepository courseRepository;
 
     /**
-     * コース一覧取得（LEARNER向け: publishedのみ / ADMIN向け: 全件）
+     * コース一覧取得（LEARNER向け: publishedのみ / ADMIN向け: status指定可）
      */
     @Transactional(readOnly = true)
-    public PageResponse<CourseResponse> getCourses(String keyword, boolean isAdmin, Pageable pageable) {
+    public PageResponse<CourseResponse> getCourses(String keyword, String status, String sort,
+                                                    boolean isAdmin, Pageable pageable) {
+        Pageable sortedPageable = applySorting(pageable, sort);
+
+        // Non-admin users can only see published courses
+        String effectiveStatus = isAdmin ? status : "published";
+
         Page<Course> page;
 
         if (StringUtils.hasText(keyword)) {
-            page = isAdmin
-                    ? courseRepository.searchAllByKeyword(keyword, pageable)
-                    : courseRepository.searchPublishedByKeyword(keyword, pageable);
+            page = switch (effectiveStatus) {
+                case "published" -> courseRepository.searchPublishedByKeyword(keyword, sortedPageable);
+                case "draft" -> courseRepository.searchDraftByKeyword(keyword, sortedPageable);
+                default -> courseRepository.searchAllByKeyword(keyword, sortedPageable);
+            };
         } else {
-            page = isAdmin
-                    ? courseRepository.findAll(pageable)
-                    : courseRepository.findByPublishedTrue(pageable);
+            page = switch (effectiveStatus) {
+                case "published" -> courseRepository.findByPublishedTrue(sortedPageable);
+                case "draft" -> courseRepository.findByPublishedFalse(sortedPageable);
+                default -> courseRepository.findAll(sortedPageable);
+            };
         }
 
         List<CourseResponse> content = page.getContent().stream()
@@ -46,6 +58,15 @@ public class CourseService {
                 .toList();
 
         return PageResponse.from(page, content);
+    }
+
+    private Pageable applySorting(Pageable pageable, String sort) {
+        Sort sortOrder = switch (sort != null ? sort : "newest") {
+            case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
+            case "title" -> Sort.by(Sort.Direction.ASC, "title");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortOrder);
     }
 
     /**

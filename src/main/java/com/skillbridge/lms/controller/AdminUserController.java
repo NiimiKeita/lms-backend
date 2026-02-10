@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.request.AdminCreateUserRequest;
 import com.skillbridge.lms.dto.request.AdminUpdateUserRequest;
 import com.skillbridge.lms.dto.response.PageResponse;
@@ -34,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/admin/users")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
+@Tag(name = "Admin Users", description = "ユーザー管理 API (管理者)")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;

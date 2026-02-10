@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.request.CreateTaskRequest;
 import com.skillbridge.lms.dto.request.UpdateTaskRequest;
 import com.skillbridge.lms.dto.response.MessageResponse;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/courses/{courseId}/tasks")
 @RequiredArgsConstructor
+@Tag(name = "Tasks", description = "課題管理 API")
 public class TaskController {
 
     private final TaskService taskService;

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.request.UpdateProfileRequest;
 import com.skillbridge.lms.dto.response.ProfileResponse;
 import com.skillbridge.lms.service.UserService;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/users/me")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "ユーザープロフィール API")
 public class UserController {
 
     private final UserService userService;

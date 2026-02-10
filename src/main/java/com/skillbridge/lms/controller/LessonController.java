@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.request.CreateLessonRequest;
 import com.skillbridge.lms.dto.request.ReorderLessonsRequest;
 import com.skillbridge.lms.dto.request.UpdateLessonRequest;
@@ -30,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/courses/{courseId}/lessons")
 @RequiredArgsConstructor
+@Tag(name = "Lessons", description = "レッスン管理 API")
 public class LessonController {
 
     private final LessonService lessonService;

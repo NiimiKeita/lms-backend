@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.response.AdminStatsResponse;
 import com.skillbridge.lms.dto.response.PageResponse;
 import com.skillbridge.lms.dto.response.UserCourseProgressResponse;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
+@Tag(name = "Admin Progress", description = "進捗管理 API (管理者)")
 public class AdminProgressController {
 
     private final AdminProgressService adminProgressService;

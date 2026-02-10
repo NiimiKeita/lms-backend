@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.request.CreateFeedbackRequest;
 import com.skillbridge.lms.dto.request.CreateSubmissionRequest;
 import com.skillbridge.lms.dto.request.UpdateSubmissionStatusRequest;
@@ -32,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
+@Tag(name = "Submissions", description = "提出管理 API")
 public class TaskSubmissionController {
 
     private final TaskSubmissionService submissionService;

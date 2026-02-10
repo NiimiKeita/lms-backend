@@ -21,4 +21,10 @@ public interface TaskSubmissionRepository extends JpaRepository<TaskSubmission, 
     long countByTaskId(Long taskId);
 
     long countByTaskIdAndStatus(Long taskId, SubmissionStatus status);
+
+    List<TaskSubmission> findByUserIdOrderBySubmittedAtDesc(Long userId);
+
+    long countByStatus(SubmissionStatus status);
+
+    List<TaskSubmission> findTop10ByOrderBySubmittedAtDesc();
 }

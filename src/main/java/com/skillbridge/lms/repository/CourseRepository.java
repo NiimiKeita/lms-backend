@@ -21,4 +21,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
            "WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(c.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Course> searchAllByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    Page<Course> findByPublishedFalse(Pageable pageable);
+
+    @Query("SELECT c FROM Course c WHERE c.published = false " +
+           "AND (LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(c.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Course> searchDraftByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

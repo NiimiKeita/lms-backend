@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.request.CreateCourseRequest;
 import com.skillbridge.lms.dto.request.UpdateCourseRequest;
 import com.skillbridge.lms.dto.response.CourseResponse;
@@ -32,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
+@Tag(name = "Courses", description = "コース管理 API")
 public class CourseController {
 
     private final CourseService courseService;
@@ -43,11 +46,13 @@ public class CourseController {
     @GetMapping
     public ResponseEntity<PageResponse<CourseResponse>> getCourses(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false, defaultValue = "all") String status,
+            @RequestParam(required = false, defaultValue = "newest") String sort,
+            @PageableDefault(size = 10) Pageable pageable,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         boolean isAdmin = hasAdminRole(userDetails);
-        PageResponse<CourseResponse> response = courseService.getCourses(keyword, isAdmin, pageable);
+        PageResponse<CourseResponse> response = courseService.getCourses(keyword, status, sort, isAdmin, pageable);
         return ResponseEntity.ok(response);
     }
 

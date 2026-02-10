@@ -46,6 +46,14 @@ app:
     allowed-origins: http://localhost:3000
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
 content:
   base-path: content
 

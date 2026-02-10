@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.skillbridge.lms.dto.response.CourseProgressResponse;
 import com.skillbridge.lms.dto.response.MessageResponse;
 import com.skillbridge.lms.service.ProgressService;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Progress", description = "進捗管理 API")
 public class ProgressController {
 
     private final ProgressService progressService;
