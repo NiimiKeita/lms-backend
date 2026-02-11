@@ -91,6 +91,7 @@ public class CourseService {
         Course course = Course.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .thumbnailUrl(request.getThumbnailUrl())
                 .published(false)
                 .sortOrder(0)
                 .build();
@@ -108,6 +109,7 @@ public class CourseService {
 
         course.setTitle(request.getTitle());
         course.setDescription(request.getDescription());
+        course.setThumbnailUrl(request.getThumbnailUrl());
 
         course = courseRepository.save(course);
         return CourseResponse.from(course);

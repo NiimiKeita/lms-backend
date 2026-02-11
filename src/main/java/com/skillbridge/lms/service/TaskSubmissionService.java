@@ -35,6 +35,7 @@ public class TaskSubmissionService {
     private final TaskSubmissionRepository submissionRepository;
     private final TaskFeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public TaskSubmissionResponse submit(Long taskId, String email, CreateSubmissionRequest request) {
@@ -101,6 +102,17 @@ public class TaskSubmissionService {
                 .build();
 
         feedback = feedbackRepository.save(feedback);
+
+        // Create notification for the submission owner
+        User submissionOwner = submission.getUser();
+        notificationService.createNotification(
+                submissionOwner,
+                "課題にフィードバックが届きました",
+                "「" + submission.getTask().getTitle() + "」にフィードバックが追加されました。",
+                "FEEDBACK",
+                "/courses/" + submission.getTask().getCourse().getId()
+                        + "/tasks/" + submission.getTask().getId());
+
         return TaskFeedbackResponse.from(feedback);
     }
 

@@ -15,4 +15,7 @@ public class CreateCourseRequest {
 
     @Size(max = 5000, message = "説明は5000文字以内で入力してください")
     private String description;
+
+    @Size(max = 500, message = "サムネイルURLは500文字以内で入力してください")
+    private String thumbnailUrl;
 }

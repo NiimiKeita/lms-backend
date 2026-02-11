@@ -56,6 +56,9 @@ class TaskSubmissionServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private TaskSubmissionService submissionService;
 

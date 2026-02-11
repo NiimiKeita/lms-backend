@@ -104,6 +104,49 @@
 
 ---
 
+## Sprint 6 (2/11) - ダッシュボード + 検索 + テスト + ドキュメント
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 25 | INSTRUCTOR ナビゲーション (サイドバー roles ベースフィルタリング) | 完了 |
+| Phase 26 | ダッシュボード強化 (DashboardController/Service + Frontend) | 完了 |
+| Phase 27 | コース検索・フィルタ改善 (status/sort パラメータ + Frontend UI) | 完了 |
+| Phase 28 | フロントエンドテスト基盤 (Vitest + testing-library, 42テスト) | 完了 |
+| Phase 29 | OpenAPI ドキュメント (springdoc-openapi, Swagger UI) | 完了 |
+| Phase 30 | ビルド確認 + commit/push | 完了 |
+
+**成果物:**
+- ダッシュボード API (2 endpoints): 受講者 + 講師ダッシュボード
+- コース検索強化: status (all/published/draft), sort (newest/oldest/title) パラメータ
+- INSTRUCTOR ナビゲーション: サイドバーに roles ベースのフィルタリング
+- Frontend テスト基盤: Vitest + @testing-library/react (42テスト)
+- OpenAPI: springdoc-openapi-starter-webmvc-ui, Swagger UI (`/swagger-ui.html`)
+- 全13コントローラーに `@Tag` アノテーション追加
+
+---
+
+## Sprint 7 (2/11) - 品質強化 + 実用機能追加
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 31 | CI/CD パイプライン (GitHub Actions, 両リポジトリ) | 完了 |
+| Phase 32 | E2E テスト (Playwright, 8テストケース) | 完了 |
+| Phase 33 | 通知機能 (Notification API + Frontend ベルアイコン) | 完了 |
+| Phase 34 | ファイルアップロード (MultipartFile + コースサムネイル) | 完了 |
+| Phase 35 | コースカテゴリ/タグ (Category CRUD + 多対多リレーション) | 完了 |
+| Phase 36 | セキュリティ強化 + ビルド確認 (Rate Limiting + テスト全パス) | 完了 |
+
+**成果物:**
+- CI/CD: GitHub Actions (Backend: Gradle build+test, Frontend: npm ci+test+build)
+- E2E テスト: Playwright (認証フロー + コース閲覧フロー)
+- 通知 API (4 endpoints): 一覧/未読数/既読/全既読 + フィードバック時自動通知
+- ファイルアップロード (2 endpoints): アップロード + 配信、コースサムネイル対応
+- カテゴリ管理 (7 endpoints): CRUD + コースへの紐付け/取得
+- Rate Limiting: IP単位 60 req/min
+- Flyway V8-V10: notifications, thumbnail_url, categories/course_categories
+
+---
+
 ## API エンドポイント一覧
 
 ### 認証 (AuthController)
@@ -202,7 +245,45 @@
 |--------|------|------|------|
 | GET | `/api/health` | ヘルスチェック | 不要 |
 
-**合計: 41 endpoints**
+### 認証追加 (AuthController) - Sprint 3/5
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/auth/me` | 現在のユーザー情報取得 | 必要 |
+| POST | `/api/auth/forgot-password` | パスワードリセット要求 | 不要 |
+| POST | `/api/auth/reset-password` | パスワードリセット | 不要 |
+
+### ダッシュボード (DashboardController) - Sprint 6
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/dashboard/learner` | 受講者ダッシュボード | 必要 |
+| GET | `/api/dashboard/instructor` | 講師ダッシュボード | INSTRUCTOR/ADMIN |
+
+### 通知 (NotificationController) - Sprint 7
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/notifications` | 通知一覧 | 必要 |
+| GET | `/api/notifications/unread-count` | 未読数取得 | 必要 |
+| PATCH | `/api/notifications/{id}/read` | 既読にする | 必要 |
+| POST | `/api/notifications/read-all` | 全て既読にする | 必要 |
+
+### ファイル (FileController) - Sprint 7
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| POST | `/api/files/upload` | ファイルアップロード | ADMIN/INSTRUCTOR |
+| GET | `/api/files/{filename}` | ファイル配信 | 不要 |
+
+### カテゴリ (CategoryController) - Sprint 7
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/categories` | カテゴリ一覧 | 必要 |
+| GET | `/api/categories/{id}` | カテゴリ詳細 | 必要 |
+| POST | `/api/categories` | カテゴリ作成 | ADMIN |
+| PUT | `/api/categories/{id}` | カテゴリ更新 | ADMIN |
+| DELETE | `/api/categories/{id}` | カテゴリ削除 | ADMIN |
+| GET | `/api/categories/courses/{courseId}` | コースのカテゴリ取得 | 必要 |
+| PUT | `/api/categories/courses/{courseId}` | コースのカテゴリ設定 | ADMIN |
+
+**合計: 66 endpoints**
 
 ---
 
@@ -240,7 +321,7 @@
 | `/admin/submissions/[id]` | 提出レビュー詳細 |
 | `/courses/[id]/tasks/[taskId]` | 課題提出 |
 
-**合計: 20 ページ**
+**合計: 21 ページ** (+ ルートリダイレクト + 通知ドロップダウン)
 
 ---
 
@@ -255,6 +336,9 @@
 | V5 | tasks, submissions テーブル | 2 |
 | V6 | lesson_progress 再作成 + enrollments テーブル | 3 |
 | V7 | INSTRUCTOR ロール追加 | 4 |
+| V8 | notifications テーブル | 7 |
+| V9 | courses.thumbnail_url カラム追加 | 7 |
+| V10 | categories, course_categories テーブル | 7 |
 
 ---
 
@@ -279,4 +363,31 @@
 | TaskSubmissionServiceTest | 15 | Unit | 5 |
 | TaskControllerIntegrationTest | 14 | Integration | 5 |
 
-**合計: 約151テスト**
+**Backend 合計: 145テスト**
+
+### Frontend テスト (Vitest + testing-library) - Sprint 6
+
+| テストファイル | テスト数 | 種別 |
+|---------------|---------|------|
+| Button.test.tsx | 8 | Component |
+| Input.test.tsx | 6 | Component |
+| Card.test.tsx | 3 | Component |
+| TaskForm.test.tsx | 5 | Component |
+| LessonForm.test.tsx | 5 | Component |
+| TaskList.test.tsx | 8 | Component |
+| LessonList.test.tsx | 7 | Component |
+
+**Frontend 合計: 42テスト**
+
+**プロジェクト全体: 187テスト (Backend 145 + Frontend 42)**
+
+### E2E テスト (Playwright) - Sprint 7
+
+| テストファイル | テスト数 | 種別 |
+|---------------|---------|------|
+| auth.spec.ts | 5 | E2E |
+| courses.spec.ts | 3 | E2E |
+
+**E2E 合計: 8テスト**
+
+**全テスト合計: 195テスト (Backend 145 + Frontend Unit 42 + E2E 8)**

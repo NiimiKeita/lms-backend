@@ -110,3 +110,66 @@
 ### ADR-020: Next.js standalone出力
 - **決定**: `output: "standalone"` でビルド
 - **理由**: Docker デプロイ時に node_modules 不要、イメージサイズ削減
+
+---
+
+## Sprint 6 設計判断 (2026-02-11)
+
+### ADR-021: ダッシュボード集約パターン
+- **決定**: DashboardService で複数リポジトリを集約し、受講者/講師向けに専用レスポンスを返す
+- **理由**: フロントエンドで複数 API を叩く代わりに、1リクエストでダッシュボードに必要な全データを取得
+- **実装**: LearnerDashboardResponse (受講コース, 未提出課題, 最新フィードバック), InstructorDashboardResponse (未レビュー数, 最近の提出一覧)
+
+### ADR-022: コース検索のバックエンド実装
+- **決定**: CourseService に status/sort パラメータを追加し、Repository クエリで絞り込み
+- **理由**: DB側でフィルタリングすることでパフォーマンスを確保、ページネーションとの整合性
+- **実装**: status (all/published/draft), sort (newest/oldest/title) → applySorting() で Pageable を動的生成
+
+### ADR-023: フロントエンドテスト基盤の選定
+- **決定**: Vitest + @testing-library/react + jsdom
+- **理由**: Next.js との親和性、Vite ベースの高速テスト実行、Jest 互換 API
+- **注意**: Input コンポーネントが htmlFor を使わないため getByLabelText 不可 → getByPlaceholderText で代替
+
+### ADR-024: OpenAPI ドキュメントの導入
+- **決定**: springdoc-openapi-starter-webmvc-ui:2.8.6 で Swagger UI を自動生成
+- **理由**: コード内のアノテーションから自動でAPI仕様書を生成、メンテナンスコスト最小
+- **実装**: SecurityConfig で `/swagger-ui/**`, `/v3/api-docs/**` を permitAll に追加
+
+### ADR-025: サイドバーの roles ベースフィルタリング
+- **決定**: NavItem に `roles?: string[]` フィールドを追加し、`adminOnly` と共存
+- **理由**: INSTRUCTOR にも提出管理を許可するため、単純な adminOnly では不十分
+- **実装**: roles 配列にユーザーのロールが含まれるかチェック → adminOnly は後方互換として残す
+
+---
+
+## Sprint 7
+
+### ADR-026: GitHub Actions CI/CD パイプライン
+- **決定**: 両リポジトリに `.github/workflows/ci.yml` を作成
+- **理由**: PR・push 時の自動ビルド/テスト検証、品質ゲートの導入
+- **実装**: Backend は Gradle build + test (H2テストプロファイル)、Frontend は npm ci + test + build
+
+### ADR-027: Playwright E2E テスト導入
+- **決定**: Playwright (Chromium) による E2E テスト基盤
+- **理由**: クリティカルパス（認証、コース閲覧）の UI 回帰テスト
+- **実装**: `e2e/` ディレクトリに auth/courses のテストケース配置
+
+### ADR-028: 通知システム
+- **決定**: Notification エンティティ + REST API + フロントエンドドロップダウン
+- **理由**: 課題フィードバック等のイベント通知をリアルタイム的に提供
+- **実装**: Flyway V8 で notifications テーブル、30秒ポーリングで未読数更新、フィードバック時に自動通知生成
+
+### ADR-029: ファイルアップロード（ローカルストレージ）
+- **決定**: MultipartFile + ローカル uploads/ ディレクトリ保存
+- **理由**: MVP 段階で S3 等の外部依存を避け、シンプルに実装
+- **実装**: Flyway V9 で thumbnail_url カラム追加、FileStorageService で JPEG/PNG/GIF/WebP のみ 5MB 制限
+
+### ADR-030: コースカテゴリ (多対多リレーション)
+- **決定**: Category エンティティ + course_categories 中間テーブル
+- **理由**: コースの分類・フィルタリング機能の提供
+- **実装**: Flyway V10 で categories, course_categories テーブル、フロントエンドにカテゴリフィルタ UI
+
+### ADR-031: Rate Limiting (手動実装)
+- **決定**: OncePerRequestFilter ベースの IP 単位レートリミッター (60 req/min)
+- **理由**: DDoS 対策の基本レイヤー、外部ライブラリ不要
+- **実装**: ConcurrentHashMap で IP ごとの時間窓ベースカウント、テストプロファイルでは無効化
