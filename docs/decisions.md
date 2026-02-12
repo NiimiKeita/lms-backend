@@ -173,3 +173,60 @@
 - **決定**: OncePerRequestFilter ベースの IP 単位レートリミッター (60 req/min)
 - **理由**: DDoS 対策の基本レイヤー、外部ライブラリ不要
 - **実装**: ConcurrentHashMap で IP ごとの時間窓ベースカウント、テストプロファイルでは無効化
+- **修正 (2026-02-12)**: CORS preflight (OPTIONS) リクエストをカウント対象外に変更 → 実質リミットが 30→60 API calls/min に正常化
+
+---
+
+## バグ修正 ADR (2026-02-12)
+
+### ADR-032: CORS Preflight のレートリミット除外
+- **問題**: RateLimitFilter が OPTIONS リクエストもカウントし、SPA のクロスオリジン通信で実質リミットが半減
+- **決定**: `OPTIONS` メソッドをレートリミットカウントから除外
+- **理由**: OPTIONS は CORS の仕組みでブラウザが自動送信するもので、ユーザーの実アクションではない
+- **影響**: ダッシュボードの複数回ロード + ログインフローで 429 エラーが発生していた問題を解消
+
+### ADR-033: 401 インターセプターのソフトリダイレクト
+- **問題**: `window.location.href = "/login"` によるハードリダイレクトが React の状態管理と競合する可能性
+- **決定**: カスタムイベント `auth:force-logout` を dispatch し、AuthContext がリスナーで `setUser(null)` → React Router による遷移
+- **理由**: ハードリダイレクトはページ全体のリロードを伴い、並行リクエストとの競合リスクがある
+- **実装**: `api.ts` で `window.dispatchEvent(new Event("auth:force-logout"))`、`AuthContext.tsx` で `addEventListener`
+
+### ADR-034: @BatchSize による N+1 クエリ対策
+- **問題**: `open-in-view: false` 環境で `CourseResponse.from()` が lazy-loaded な `categories` と `lessons` にアクセスし N+1 クエリ発生
+- **決定**: Course エンティティの `lessons`, `categories` コレクションに `@BatchSize(size = 20)` を付与
+- **理由**: JOIN FETCH はページネーションと相性が悪い（Hibernate がメモリ内ページネーションに切り替える）。@BatchSize なら既存クエリを変更せず、20 件ずつバッチロードで N+1 を軽減
+- **実装**: `Course.java` の `@OneToMany lessons` と `@ManyToMany categories` に `@BatchSize(size = 20)` 追加
+
+---
+
+## Sprint 8
+
+### ADR-035: コース完了証明書 (OpenPDF)
+- **決定**: OpenPDF (librepdf/openpdf 2.0.3) でPDF生成、証明書番号はUUID
+- **理由**: OpenPDF は iText のフォーク（LGPL）で商用利用可、軽量
+- **実装**: コース全レッスン完了時に ProgressService から CertificateService.issueCertificate() を自動呼び出し
+
+### ADR-036: コースレビュー/評価
+- **決定**: 1ユーザー1コース1レビュー制約 (UNIQUE(user_id, course_id))
+- **理由**: 重複レビュー防止、平均評価の信頼性確保
+- **実装**: CourseResponse に averageRating, reviewCount を追加、一覧/詳細で表示
+
+### ADR-037: 分析ダッシュボード (recharts)
+- **決定**: recharts ライブラリで棒グラフ・折れ線・円グラフ、CSV エクスポート
+- **理由**: React 19 互換、宣言的API、SSR不要（client component）
+- **実装**: AnalyticsController (ADMIN限定) + AnalyticsService でデータ集約
+
+### ADR-038: ダークモード実装方式
+- **決定**: CSS カスタムプロパティ + Tailwind `@custom-variant dark` + localStorage + OS設定フォールバック
+- **理由**: Tailwind 4 のカスタムバリアント機能で .dark クラスベースの切替を実現
+- **実装**: ThemeToggle コンポーネント、document.documentElement.classList で .dark を切替
+
+### ADR-039: モバイルレスポンシブ
+- **決定**: md:breakpoint (768px) でサイドバー折りたたみ、ハンバーガーメニューで表示
+- **理由**: Tailwind のレスポンシブプレフィックスで最小限の実装
+- **実装**: Sidebar の mobile prop + fixed overlay パターン
+
+### ADR-040: 監査ログ (Spring AOP)
+- **決定**: Spring AOP @Aspect で管理者アクション (CRUD) を自動記録
+- **理由**: ビジネスロジックに影響を与えずに横断的関心事として実装
+- **実装**: AuditAspect (AdminUserService, CourseService, CategoryService の CUD メソッドをポイントカット)、@Profile("!test") でテスト時除外

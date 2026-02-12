@@ -31,12 +31,16 @@ import com.skillbridge.lms.dto.response.PageResponse;
 import com.skillbridge.lms.entity.Course;
 import com.skillbridge.lms.exception.ResourceNotFoundException;
 import com.skillbridge.lms.repository.CourseRepository;
+import com.skillbridge.lms.repository.ReviewRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseServiceTest {
 
     @Mock
     private CourseRepository courseRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private CourseService courseService;

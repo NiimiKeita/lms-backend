@@ -54,6 +54,12 @@ class ProgressServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private CertificateService certificateService;
+
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private ProgressService progressService;
 

@@ -17,6 +17,7 @@ import com.skillbridge.lms.dto.response.PageResponse;
 import com.skillbridge.lms.entity.Course;
 import com.skillbridge.lms.exception.ResourceNotFoundException;
 import com.skillbridge.lms.repository.CourseRepository;
+import com.skillbridge.lms.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class CourseService {
 
     private final CourseRepository courseRepository;
+    private final ReviewRepository reviewRepository;
 
     /**
      * コース一覧取得（LEARNER向け: publishedのみ / ADMIN向け: status指定可）
@@ -54,7 +56,9 @@ public class CourseService {
         }
 
         List<CourseResponse> content = page.getContent().stream()
-                .map(CourseResponse::from)
+                .map(course -> CourseResponse.from(course,
+                        reviewRepository.findAverageRatingByCourseId(course.getId()),
+                        reviewRepository.countByCourseId(course.getId())))
                 .toList();
 
         return PageResponse.from(page, content);
@@ -80,7 +84,9 @@ public class CourseService {
             throw new ResourceNotFoundException("コースが見つかりません: " + id);
         }
 
-        return CourseResponse.from(course);
+        return CourseResponse.from(course,
+                reviewRepository.findAverageRatingByCourseId(id),
+                reviewRepository.countByCourseId(id));
     }
 
     /**

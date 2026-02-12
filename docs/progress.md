@@ -8,7 +8,7 @@
 |------|-----|
 | Backend | Java 21, Spring Boot 3.5.0, Gradle Kotlin DSL |
 | Frontend | Next.js 16.1.6, React 19, Tailwind CSS 4 |
-| DB | MySQL 9.3, Flyway (V1-V7) |
+| DB | MySQL 9.3, Flyway (V1-V13) |
 | Auth | Spring Security + JWT (jjwt 0.13.0) |
 | GitHub | SkillBridge-LMS org |
 
@@ -144,6 +144,30 @@
 - カテゴリ管理 (7 endpoints): CRUD + コースへの紐付け/取得
 - Rate Limiting: IP単位 60 req/min
 - Flyway V8-V10: notifications, thumbnail_url, categories/course_categories
+
+---
+
+## Sprint 8 (2/12) - 証明書 + レビュー + 分析 + ダークモード + 監査
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 37 | コース完了証明書 (Certificate entity + PDF生成 + Frontend) | 完了 |
+| Phase 38 | コースレビュー/評価 (Review entity + 5 endpoints + StarRating) | 完了 |
+| Phase 39 | 分析ダッシュボード + CSVエクスポート (4 endpoints + recharts) | 完了 |
+| Phase 40 | ダークモード + レスポンシブ改善 (ThemeToggle + モバイルメニュー) | 完了 |
+| Phase 41 | テスト拡充 (Backend 30 + Frontend 10) | 完了 |
+| Phase 42 | 監査ログ (AuditLog entity + Spring AOP + 2 endpoints + Frontend) | 完了 |
+
+**成果物:**
+- 証明書 (3 endpoints): 一覧/詳細/PDFダウンロード + コース完了時自動発行
+- レビュー (5 endpoints): CRUD + 平均評価・レビュー数をコースレスポンスに統合
+- 分析 (4 endpoints): 受講者推移/完了率/人気コース/CSVエクスポート (ADMIN)
+- 監査ログ (2 endpoints): ログ一覧(フィルタ付き)/CSVエクスポート (ADMIN)
+- ダークモード: ThemeToggle + CSS custom-variant dark + localStorage永続化
+- レスポンシブ: モバイルハンバーガーメニュー (768px以下)
+- Flyway V11-V13: certificates, reviews, audit_logs テーブル
+- 新規依存: com.github.librepdf:openpdf:2.0.3, spring-boot-starter-aop, recharts
+- テスト: NotificationService(6), CategoryService(8), FileStorage(6), RateLimit(4), Certificate(6), NotificationBell(4), StarRating(3), ThemeToggle(3)
 
 ---
 
@@ -283,7 +307,63 @@
 | GET | `/api/categories/courses/{courseId}` | コースのカテゴリ取得 | 必要 |
 | PUT | `/api/categories/courses/{courseId}` | コースのカテゴリ設定 | ADMIN |
 
-**合計: 66 endpoints**
+### 証明書 (CertificateController) - Sprint 8
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/certificates/my` | 自分の証明書一覧 | 必要 |
+| GET | `/api/certificates/{id}` | 証明書詳細 | 必要 |
+| GET | `/api/certificates/{id}/pdf` | PDFダウンロード | 必要 |
+
+### レビュー (ReviewController) - Sprint 8
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| POST | `/api/courses/{courseId}/reviews` | レビュー投稿 | 必要 |
+| GET | `/api/courses/{courseId}/reviews` | レビュー一覧 | 必要 |
+| GET | `/api/courses/{courseId}/reviews/my` | 自分のレビュー | 必要 |
+| PUT | `/api/courses/{courseId}/reviews/my` | レビュー更新 | 必要 |
+| DELETE | `/api/courses/{courseId}/reviews/my` | レビュー削除 | 必要 |
+
+### 分析 (AnalyticsController) - Sprint 8
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/admin/analytics/enrollments` | 受講者推移 | ADMIN |
+| GET | `/api/admin/analytics/completions` | 完了率統計 | ADMIN |
+| GET | `/api/admin/analytics/popular-courses` | 人気コースランキング | ADMIN |
+| GET | `/api/admin/analytics/export/csv` | CSVエクスポート | ADMIN |
+
+### 監査ログ (AuditLogController) - Sprint 8
+| Method | Path | 説明 | 認証 |
+|--------|------|------|------|
+| GET | `/api/admin/audit-logs` | ログ一覧 | ADMIN |
+| GET | `/api/admin/audit-logs/export` | CSVエクスポート | ADMIN |
+
+**合計: 80 endpoints**
+
+---
+
+## バグ修正 (Sprint 7 後)
+
+### BUG-001: レートリミッターによるログイン失敗 (2026-02-12)
+
+**症状**: 管理者ログイン → ログアウト → 生徒ログイン → ログアウト → 管理者ログイン時に「ログインに失敗しました」エラーが発生。
+
+**根本原因**: `RateLimitFilter` が CORS preflight (OPTIONS) リクエストもカウントしていた。ブラウザはクロスオリジンの各APIコールで OPTIONS + 実リクエストの2つを送信するため、実質リミットが 30 API calls/min に半減。ダッシュボード1回のロードで約15 APIコール = 30 HTTPリクエストとなり、2回のログイン/ログアウトサイクルで 60 リクエストを超過して 429 Too Many Requests が返されていた。
+
+**修正内容**:
+
+| ファイル | 変更 |
+|---------|------|
+| `RateLimitFilter.java` | OPTIONS リクエストをレートリミットカウントから除外 |
+| `api.ts` | 401 インターセプターの `window.location.href` → カスタムイベント `auth:force-logout` に変更 |
+| `AuthContext.tsx` | `auth:force-logout` イベントリスナー追加で React 的にログアウト処理 |
+| `Course.java` | `lessons`, `categories` に `@BatchSize(size = 20)` 追加 (N+1 クエリ対策) |
+
+**調査過程**:
+1. バックエンドログにエラーなし → フロントエンドかインフラ層の問題と判断
+2. `open-in-view: false` 設定下での LazyInitializationException を疑うも @Transactional 内で問題なし
+3. 認証フロー (JWT, AuthContext, api interceptor) を精査 → 正常
+4. バックエンドログの詳細分析で、login POST の "Securing" 後に "Secured" が欠落 → フィルタチェーン途中で応答が返されたことを確認
+5. CORS preflight + RateLimitFilter の組合せで 60 req/min 超過が根本原因と特定
 
 ---
 
@@ -319,9 +399,12 @@
 | `/admin/progress` | 進捗管理一覧 |
 | `/admin/submissions` | 提出管理一覧 |
 | `/admin/submissions/[id]` | 提出レビュー詳細 |
+| `/admin/analytics` | 分析ダッシュボード (ADMIN) |
+| `/admin/audit-logs` | 監査ログ (ADMIN) |
 | `/courses/[id]/tasks/[taskId]` | 課題提出 |
+| `/my-certificates` | 証明書一覧 |
 
-**合計: 21 ページ** (+ ルートリダイレクト + 通知ドロップダウン)
+**合計: 24 ページ** (+ ルートリダイレクト + 通知ドロップダウン + ThemeToggle)
 
 ---
 
@@ -339,6 +422,9 @@
 | V8 | notifications テーブル | 7 |
 | V9 | courses.thumbnail_url カラム追加 | 7 |
 | V10 | categories, course_categories テーブル | 7 |
+| V11 | certificates テーブル | 8 |
+| V12 | reviews テーブル | 8 |
+| V13 | audit_logs テーブル | 8 |
 
 ---
 
@@ -362,8 +448,13 @@
 | TaskServiceTest | 12 | Unit | 5 |
 | TaskSubmissionServiceTest | 15 | Unit | 5 |
 | TaskControllerIntegrationTest | 14 | Integration | 5 |
+| NotificationServiceTest | 6 | Unit | 8 |
+| CategoryServiceTest | 8 | Unit | 8 |
+| FileStorageServiceTest | 6 | Unit | 8 |
+| RateLimitFilterTest | 4 | Unit | 8 |
+| CertificateServiceTest | 6 | Unit | 8 |
 
-**Backend 合計: 145テスト**
+**Backend 合計: 175テスト**
 
 ### Frontend テスト (Vitest + testing-library) - Sprint 6
 
@@ -376,10 +467,13 @@
 | LessonForm.test.tsx | 5 | Component |
 | TaskList.test.tsx | 8 | Component |
 | LessonList.test.tsx | 7 | Component |
+| NotificationBell.test.tsx | 4 | Component | 8 |
+| StarRating.test.tsx | 3 | Component | 8 |
+| ThemeToggle.test.tsx | 3 | Component | 8 |
 
-**Frontend 合計: 42テスト**
+**Frontend 合計: 52テスト**
 
-**プロジェクト全体: 187テスト (Backend 145 + Frontend 42)**
+**プロジェクト全体: 227テスト (Backend 175 + Frontend 52)**
 
 ### E2E テスト (Playwright) - Sprint 7
 
@@ -390,4 +484,4 @@
 
 **E2E 合計: 8テスト**
 
-**全テスト合計: 195テスト (Backend 145 + Frontend Unit 42 + E2E 8)**
+**全テスト合計: 235テスト (Backend 175 + Frontend Unit 52 + E2E 8)**

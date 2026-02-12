@@ -41,6 +41,12 @@ dependencies {
     // OpenAPI / Swagger UI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 
+    // PDF Generation
+    implementation("com.github.librepdf:openpdf:2.0.3")
+
+    // AOP (for audit logging)
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")

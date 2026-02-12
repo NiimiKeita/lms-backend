@@ -22,6 +22,8 @@ public class CourseResponse {
     private int lessonCount;
     private String thumbnailUrl;
     private List<CategoryResponse> categories;
+    private Double averageRating;
+    private Long reviewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -44,6 +46,24 @@ public class CourseResponse {
                 .categories(categoryList)
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
+                .build();
+    }
+
+    public static CourseResponse from(Course course, Double averageRating, Long reviewCount) {
+        CourseResponse response = from(course);
+        return CourseResponse.builder()
+                .id(response.getId())
+                .title(response.getTitle())
+                .description(response.getDescription())
+                .sortOrder(response.getSortOrder())
+                .published(response.getPublished())
+                .lessonCount(response.getLessonCount())
+                .thumbnailUrl(response.getThumbnailUrl())
+                .categories(response.getCategories())
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
+                .createdAt(response.getCreatedAt())
+                .updatedAt(response.getUpdatedAt())
                 .build();
     }
 }

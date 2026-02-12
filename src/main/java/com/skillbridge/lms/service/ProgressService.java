@@ -37,6 +37,8 @@ public class ProgressService {
     private final CourseRepository courseRepository;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
+    private final CertificateService certificateService;
+    private final NotificationService notificationService;
 
     /**
      * レッスン完了マーク
@@ -207,6 +209,18 @@ public class ProgressService {
                 enrollment.setStatus(EnrollmentStatus.COMPLETED);
                 enrollment.setCompletedAt(LocalDateTime.now());
                 enrollmentRepository.save(enrollment);
+
+                // 証明書を自動発行
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null) {
+                    certificateService.issueCertificate(user, course);
+                    notificationService.createNotification(
+                            user,
+                            "コース完了おめでとうございます！",
+                            "「" + course.getTitle() + "」の証明書が発行されました。",
+                            "CERTIFICATE",
+                            "/my-certificates");
+                }
             }
         }
     }
